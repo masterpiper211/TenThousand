@@ -1,10 +1,10 @@
 # Ten Thousand - Themed Edition
 
-A web-based implementation of the dice game "Ten Thousand" (also known as Farkle). This version features switchable visual themes (Retro Pixel and Modern UI), sound effects, AI opponent option, and high score tracking.
+A web-based implementation of the dice game "Ten Thousand" (also known as Farkle). This version features switchable visual themes (Retro Pixel and Modern UI), sound effects, AI opponent option, and high score 
 
-## Play Online
+* Can play this on mobile using the app Code Editor.
 
-[Link to live game deployment - *You'll need to host this yourself and replace this link*]
+++Gemini 2.5 Pro helped make this.
 
 ## Features
 
