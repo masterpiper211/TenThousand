@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ten Thousand Themed Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Base styles - applied regardless of theme for core structure */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .hidden { display: none !important; }
+
+        /* CSS Variables for Theming */
+        :root { /* Default to Retro theme variables */
+            --font-main: 'Press Start 2P', cursive;
+            --font-modern-ui: 'Inter', sans-serif;
+
+            --bg-body: #1a202c;
+            --text-body: #e2e8f0;
+            --bg-container: #2d3748;
+            --bg-container-medium: #4a5568;
+            --text-container-muted: #a0aec0;
+            --accent-color: #fbbf24; /* Amber/Yellow */
+            --button-bg: #4299e1; /* Blue */
+            --button-text: white;
+            --button-hover-bg: #3182ce;
+            --button-disabled-bg: #718096;
+            --button-green-bg: #48bb78;
+            --button-utility-bg: #63b3ed;
+            --button-utility-hover-bg: #4299e1;
+
+            --die-bg: #edf2f7;
+            --die-text: #2d3748;
+            --die-border: #a0aec0;
+            --die-selected-bg: #68d391;
+            --die-selected-border: #38a169;
+            --die-scored-bg: #a0aec0;
+            --die-scored-text: #4a5568;
+
+            --shadow-strong: 0 10px 20px rgba(0,0,0,0.3);
+            --shadow-medium: 0 4px 6px rgba(0,0,0,0.2);
+            --shadow-light: 0 3px 5px rgba(0,0,0,0.2);
+            --border-radius-main: 12px;
+            --border-radius-small: 8px;
+            --border-radius-dice: 8px;
+        }
+
+        /* Modern Theme Overrides */
+        .theme-modern {
+            --font-main: 'Inter', sans-serif;
+            --bg-body: #f0f2f5; /* Light grayish blue */
+            --text-body: #333;
+            --bg-container: #ffffff;
+            --bg-container-medium: #e9ecef; /* Lighter gray for score displays */
+            --text-container-muted: #6c757d; /* Bootstrap's muted text color */
+            --accent-color: #007bff; /* Standard blue */
+            --button-bg: #007bff;
+            --button-text: white;
+            --button-hover-bg: #0056b3;
+            --button-disabled-bg: #ced4da;
+            --button-green-bg: #28a745; /* Standard green */
+            --button-utility-bg: #6c757d; /* Gray for utility */
+            --button-utility-hover-bg: #5a6268;
+
+            --die-bg: #ffffff;
+            --die-text: #333;
+            --die-border: #dee2e6; /* Lighter border */
+            --die-selected-bg: #28a745; /* Green */
+            --die-selected-border: #1e7e34;
+            --die-scored-bg: #e9ecef;
+            --die-scored-text: #6c757d;
+
+            --shadow-strong: 0 8px 16px rgba(0,0,0,0.1);
+            --shadow-medium: 0 3px 6px rgba(0,0,0,0.08);
+            --shadow-light: 0 2px 4px rgba(0,0,0,0.05);
+            --border-radius-main: 8px;
+            --border-radius-small: 6px;
+            --border-radius-dice: 6px;
+        }
+
+        /* Apply themed variables */
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-body);
+            color: var(--text-body);
+        }
+
+        /* General elements styling using variables */
+        .modal {
+            position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background-color: var(--bg-container);
+            color: var(--text-body); /* Modal text color should match body or container */
+            padding: 20px; border-radius: var(--border-radius-main);
+            box-shadow: var(--shadow-strong); width: 90%; max-width: 500px;
+            max-height: 90vh; overflow-y: auto; text-align: left;
+        }
+        .theme-modern .modal-content { color: #333; /* Ensure modern modal text is readable */ }
+
+        .modal-content h2 { font-size: 1.2rem; color: var(--accent-color); margin-bottom: 15px; text-align: center; }
+        .theme-retro .modal-content h2 { font-size: 1.2rem; } 
+        .theme-modern .modal-content h2 { font-size: 1.5rem; font-weight: 600; }
+
+
+        .modal-content ul { list-style-type: disc; margin-left: 20px; }
+        .theme-retro .modal-content ul { font-size: 0.8rem; }
+        .theme-modern .modal-content ul { font-size: 0.9rem; line-height: 1.6; }
+        .modal-content li { margin-bottom: 8px; }
+        .modal-content p { margin-bottom: 10px; }
+        .theme-retro .modal-content p { font-size: 0.8rem; }
+        .theme-modern .modal-content p { font-size: 0.9rem; line-height: 1.6; }
+
+
+        .modal-content button, #game-setup button, .button-area button, .utility-buttons button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none; padding: 12px 15px;
+            border-radius: var(--border-radius-small);
+            font-family: var(--font-main); /* Theme font for buttons */
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: var(--shadow-light);
+        }
+        .theme-retro .modal-content button, .theme-retro #game-setup button, .theme-retro .button-area button, .theme-retro .utility-buttons button {
+            font-size: 0.8rem; margin: 5px;
+        }
+         .theme-modern .modal-content button, .theme-modern #game-setup button, .theme-modern .button-area button, .theme-modern .utility-buttons button {
+            font-size: 0.9rem; margin: 6px; padding: 10px 18px; font-weight: 600;
+        }
+        .modal-content button { display: block; margin: 20px auto 0; } 
+
+
+        #game-setup, .game-container {
+            background-color: var(--bg-container);
+            padding: 20px; border-radius: var(--border-radius-main);
+            box-shadow: var(--shadow-strong); width: 100%; max-width: 400px; text-align: center;
+        }
+        .theme-modern #game-setup, .theme-modern .game-container { padding: 25px; }
+
+        #game-setup label {
+            display: block; margin-bottom: 8px; color: var(--text-container-muted);
+        }
+        .theme-retro #game-setup label { font-size: 0.9rem; }
+        .theme-modern #game-setup label { font-size: 0.95rem; text-align: left; font-weight: 600; }
+
+        #game-setup input[type="number"], #game-setup select {
+            background-color: var(--bg-container-medium);
+            color: var(--text-body); 
+            border: 1px solid var(--die-border); 
+            border-radius: var(--border-radius-small); padding: 8px 10px;
+            margin-bottom: 15px; width: 100%;
+            font-family: var(--font-main); 
+        }
+        .theme-retro #game-setup input[type="number"], .theme-retro #game-setup select { font-size: 0.9rem; }
+        .theme-modern #game-setup input[type="number"], .theme-modern #game-setup select { font-size: 1rem; padding: 10px; }
+        .theme-modern #game-setup input[type="number"]::placeholder, .theme-modern #game-setup select::placeholder { color: var(--text-container-muted); }
+
+
+        #game-setup button#start-game-button { background-color: var(--button-green-bg); width: 100%; }
+        .theme-retro #game-setup button#start-game-button { padding: 12px 20px; }
+        .theme-modern #game-setup button#start-game-button { padding: 12px 20px; font-size: 1.1rem; }
+
+
+        .game-container h1 { font-weight: bold; margin-bottom: 0.75rem; color: var(--accent-color); }
+        .theme-retro .game-container h1 { font-size: 1.25rem; } 
+        .theme-modern .game-container h1 { font-size: 1.75rem; }
+
+        .player-info {
+            background-color: var(--bg-container-medium);
+            padding: 10px; border-radius: var(--border-radius-small);
+            margin-bottom: 10px;
+        }
+        .theme-retro .player-info { font-size: 0.9rem; }
+        .theme-modern .player-info { font-size: 1rem; padding: 12px; }
+
+        .player-info .current-player-indicator { color: var(--accent-color); font-weight: bold; }
+        .scores-overview {
+            margin-bottom: 15px; max-height: 60px; overflow-y: auto;
+        }
+        .theme-retro .scores-overview { font-size: 0.75rem; }
+        .theme-modern .scores-overview { font-size: 0.85rem; line-height: 1.5; }
+        .scores-overview p { margin: 3px 0; }
+
+        .dice-area { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .die {
+            background-color: var(--die-bg); color: var(--die-text);
+            border: 2px solid var(--die-border);
+            border-radius: var(--border-radius-dice);
+            width: 100%; aspect-ratio: 1 / 1; display: flex;
+            align-items: center; justify-content: center;
+            cursor: pointer; user-select: none;
+            transition: all 0.15s ease-in-out, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .theme-retro .die { font-size: 2rem; }
+        .theme-modern .die { font-size: 2.5rem; border-width: 1px; }
+
+        .die.selected {
+            background-color: var(--die-selected-bg); border-color: var(--die-selected-border);
+            transform: scale(1.1) rotate(5deg);
+        }
+        .theme-modern .die.selected { color: white; } 
+
+        .die.scored {
+            background-color: var(--die-scored-bg); color: var(--die-scored-text);
+            cursor: not-allowed; opacity: 0.7; transform: scale(0.95);
+        }
+
+        .button-area button:hover:not(:disabled), .utility-buttons button:hover:not(:disabled) {
+            background-color: var(--button-hover-bg);
+        }
+        .button-area button:active:not(:disabled), .utility-buttons button:active:not(:disabled) {
+            transform: translateY(1px); box-shadow: var(--shadow-light); 
+        }
+        .button-area button:disabled {
+            background-color: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.6;
+        }
+        .utility-buttons { margin-top:15px; display: flex; justify-content: space-around; flex-wrap: wrap; }
+        .utility-buttons button { background-color: var(--button-utility-bg); }
+        .theme-retro .utility-buttons button { font-size: 0.7rem; padding: 8px 10px; }
+        .theme-modern .utility-buttons button { font-size: 0.85rem; padding: 9px 12px; font-weight: 600;}
+
+
+        .message-area {
+            min-height: 40px; margin-top: 15px; padding: 10px;
+            background-color: var(--bg-container-medium);
+            border-radius: var(--border-radius-small); line-height: 1.4;
+            color: var(--text-body);
+        }
+        .theme-retro .message-area { font-size: 0.8rem; }
+        .theme-modern .message-area { font-size: 0.9rem; padding: 12px; color: #333; } 
+
+
+        .dice-rolling { animation: rollAnim 0.15s infinite alternate; }
+        @keyframes rollAnim { 
+            0% { transform: rotate(0deg) scale(1) translateY(0px); }
+            25% { transform: rotate(15deg) scale(1.05) translateY(-5px); }
+            50% { transform: rotate(-10deg) scale(1.02) translateY(0px); }
+            75% { transform: rotate(10deg) scale(1.05) translateY(-3px); }
+            100% { transform: rotate(-15deg) scale(1) translateY(0px); }
+        }
+
+        #high-scores-display { margin-top: 20px; }
+        #high-scores-display h3 { color: var(--accent-color); margin-bottom: 5px; }
+        .theme-retro #high-scores-display { font-size: 0.8rem; }
+        .theme-retro #high-scores-display h3 { font-size: 1rem; }
+        .theme-modern #high-scores-display { font-size: 0.9rem; }
+        .theme-modern #high-scores-display h3 { font-size: 1.2rem; font-weight: 600; }
+
+        #high-scores-display ul { list-style: none; padding: 0; }
+        #high-scores-display li { margin-bottom: 3px; }
+
+        @media (max-width: 360px) {
+            .theme-retro .die { font-size: 1.7rem; }
+            .theme-retro .button-area button, .theme-retro .utility-buttons button { padding: 10px 12px; font-size: 0.7rem; }
+            .theme-modern .die { font-size: 2rem; }
+            .theme-modern .button-area button, .theme-modern .utility-buttons button { padding: 9px 10px; font-size: 0.8rem; }
+            .modal-content { padding: 15px; }
+            .theme-retro .modal-content h2 { font-size: 1rem; }
+            .theme-retro .modal-content ul, .theme-retro .modal-content p { font-size: 0.75rem; }
+            .theme-modern .modal-content h2 { font-size: 1.3rem; }
+            .theme-modern .modal-content ul, .theme-modern .modal-content p { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body class="theme-retro"> 
+    <div id="game-setup">
+        <h1 class="text-2xl font-bold mb-6">Ten Thousand Setup</h1>
+        <div>
+            <label for="theme-selector">Game Theme:</label>
+            <select id="theme-selector">
+                <option value="retro">Retro</option>
+                <option value="modern">Modern</option>
+            </select>
+        </div>
+        <div>
+            <label for="num-players">Number of Players (1-4):</label>
+            <select id="num-players">
+                <option value="1">1 Player (vs AI)</option>
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+            </select>
+        </div>
+        <div>
+            <label for="target-score-input">Target Score:</label>
+            <input type="number" id="target-score-input" value="10000" min="1000" step="500">
+        </div>
+        <button id="start-game-button" class="w-full">Start Game</button>
+    </div>
+
+    <div class="game-container hidden" id="game-container">
+        <h1>Ten Thousand</h1>
+
+        <div class="player-info">
+            <p><span id="current-player-turn" class="current-player-indicator">Player 1</span>'s Turn</p>
+            <p>Round Score: <span id="round-score">0</span></p>
+        </div>
+        <div class="scores-overview" id="scores-overview"></div>
+
+        <div class="dice-area" id="dice-area"></div>
+
+        <div class="button-area">
+            <button id="roll-button">Roll Dice</button>
+            <button id="bank-button" disabled>Bank Points</button>
+        </div>
+        <div class="button-area mt-2">
+             <button id="confirm-selection-button" disabled>Score Selected</button>
+        </div>
+
+        <div class="message-area" id="message-area">Welcome!</div>
+
+        <div class="utility-buttons">
+            <button id="how-to-play-button">How to Play</button>
+            <button id="scoring-guide-button">Scoring Guide</button>
+            <button id="mute-button">Mute Sounds</button>
+            <button id="new-game-setup-button">New Game Setup</button>
+        </div>
+        
+        <div id="high-scores-display" class="mt-4">
+            <h3>High Scores:</h3>
+            <ul id="high-scores-list"></ul>
+        </div>
+    </div>
+
+    <div id="how-to-play-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>How to Play Ten Thousand</h2>
+            <p><strong>Objective:</strong> Be the first player to reach the target score (default 10,000 points).</p>
+            <p><strong>Getting Started:</strong></p>
+            <ul>
+                <li>Each player must score at least 500 points in a single round to "get on the board." Until then, their scores are not banked.</li>
+            </ul>
+            <p><strong>Your Turn:</strong></p>
+            <ul>
+                <li>Click "Roll Dice" to roll all available dice (initially 6).</li>
+                <li>After rolling, you must select at least one scoring die or combination of dice. (See "Scoring Guide").</li>
+                <li>Click "Score Selected" to add points to your current round score. The dice you scored are set aside.</li>
+                <li>If all 6 dice are scored in one or more selections ("Hot Dice"), you get to roll all 6 dice again and continue your turn!</li>
+                <li>You can then choose to:
+                    <ul>
+                        <li><strong>Roll Again:</strong> Roll the remaining (unscored) dice to try and score more points. Be careful, if your roll results in no scorable dice, you "Bust!"</li>
+                        <li><strong>Bank Points:</strong> Add your current round score to your total score. Your turn then ends.</li>
+                    </ul>
+                </li>
+                <li><strong>Busting:</strong> If you roll and none of the dice can be scored, you Bust! You lose all points accumulated in the current round, and your turn ends.</li>
+            </ul>
+            <p>Good luck, and have fun!</p>
+            <button id="close-how-to-play-modal-button">Close</button>
+        </div>
+    </div>
+
+    <div id="scoring-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Scoring Guide</h2>
+            <ul>
+                <li>Single 1: 100 points</li>
+                <li>Single 5: 50 points</li>
+                <li>Three 1s: 1000 points</li>
+                <li>Three 2s: 200 points</li>
+                <li>Three 3s: 300 points</li>
+                <li>Three 4s: 400 points</li>
+                <li>Three 5s: 500 points</li>
+                <li>Three 6s: 600 points</li>
+                <li>Four of a kind: 1000 points (or for four 1s, can be scored as 1000 for three 1s + 100 for the extra 1, or if you have a specific rule for 4x1s it's 2000) -> Simpler: 1000 for any four of a kind.</li>
+                <li>Five of a kind: 2000 points</li>
+                <li>Six of a kind: 3000 points</li>
+                <li>Straight (1-6): 1500 points</li>
+                <li>Three Pairs: 1500 points</li>
+                <li>Two Triplets: 2500 points</li>
+                <li>Minimum to get "on the board": 500 points in one round.</li>
+                <li>Hot Dice: If all 6 dice are scored, roll all 6 again!</li>
+            </ul>
+            <button id="close-scoring-modal-button">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        let TARGET_SCORE = 10000;
+        const MIN_SCORE_TO_GET_IN = 500;
+        const NUM_DICE = 6;
+        const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+        const AI_THINK_DELAY = 1200; // ms for AI "thinking"
+        const AI_BANK_THRESHOLD = 350; // AI will consider banking if round score is above this
+
+        // --- Game State ---
+        let players = []; 
+        let currentPlayerIndex = 0;
+        let currentRoundScore = 0;
+        let dice = []; // Array of { id, value, el, isSelected, isScoredThisTurn }
+        let numDiceAvailableToRoll = NUM_DICE;
+        let turnHasRolled = false; // Has the current player rolled in this part of their turn
+        let soundsMuted = false;
+        let highScores = [];
+        let currentTheme = 'retro'; 
+        let isAiGame = false;
+        let gameActive = false;
+
+
+        // --- DOM Elements ---
+        const bodyEl = document.body;
+        const gameSetupEl = document.getElementById('game-setup');
+        const gameContainerEl = document.getElementById('game-container');
+        const themeSelector = document.getElementById('theme-selector');
+        const startGameButton = document.getElementById('start-game-button');
+        const numPlayersSelect = document.getElementById('num-players');
+        const targetScoreInput = document.getElementById('target-score-input');
+
+        const currentPlayerTurnEl = document.getElementById('current-player-turn');
+        const roundScoreEl = document.getElementById('round-score');
+        const scoresOverviewEl = document.getElementById('scores-overview');
+        const diceAreaEl = document.getElementById('dice-area');
+        const rollButton = document.getElementById('roll-button');
+        const bankButton = document.getElementById('bank-button');
+        const confirmSelectionButton = document.getElementById('confirm-selection-button');
+        const messageAreaEl = document.getElementById('message-area');
+        
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const scoringGuideButton = document.getElementById('scoring-guide-button');
+        const muteButton = document.getElementById('mute-button');
+        const newGameSetupButton = document.getElementById('new-game-setup-button');
+        
+        const howToPlayModalEl = document.getElementById('how-to-play-modal');
+        const closeHowToPlayModalButton = document.getElementById('close-how-to-play-modal-button');
+        const scoringModalEl = document.getElementById('scoring-modal');
+        const closeScoringModalButton = document.getElementById('close-scoring-modal-button'); // Renamed for clarity
+
+        const highScoresDisplayEl = document.getElementById('high-scores-display');
+        const highScoresListEl = document.getElementById('high-scores-list');
+
+        // --- Sound Synthesis (Tone.js) ---
+        const synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.2 }
+        }).toDestination();
+        const noiseSynth = new Tone.NoiseSynth({
+            noise: { type: 'white' },
+            envelope: { attack: 0.005, decay: 0.05, sustain: 0 }
+        }).toDestination();
+
+        function playSound(type) {
+            if (soundsMuted || !Tone.context || Tone.context.state !== 'running') return;
+            try {
+                switch (type) {
+                    case 'roll': for (let i = 0; i < 3; i++) noiseSynth.triggerAttackRelease("32n", Tone.now() + i * 0.03); break;
+                    case 'score': synth.triggerAttackRelease(["C5", "E5", "G5"], "16n", Tone.now()); break;
+                    case 'bank': synth.triggerAttackRelease("G5", "8n", Tone.now()); synth.triggerAttackRelease("C6", "8n", Tone.now() + 0.1); break;
+                    case 'bust': synth.triggerAttackRelease("C3", "4n", Tone.now()); synth.triggerAttackRelease("A2", "4n", Tone.now() + 0.1); break;
+                    case 'win': synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "2n", Tone.now()); synth.triggerAttackRelease(["G4", "B4", "D5", "G5"], "2n", Tone.now() + 0.5); break;
+                    case 'click': synth.triggerAttackRelease("C5", "32n", Tone.now()); break;
+                }
+            } catch (error) { console.error("Tone.js error:", error); }
+        }
+        
+        // --- Theme Management ---
+        function applyTheme(themeName) {
+            bodyEl.classList.remove('theme-retro', 'theme-modern');
+            bodyEl.classList.add(`theme-${themeName}`);
+            currentTheme = themeName;
+            localStorage.setItem('tenThousandTheme', themeName);
+            themeSelector.value = themeName; 
+        }
+        function loadTheme() { const savedTheme = localStorage.getItem('tenThousandTheme') || 'retro'; applyTheme(savedTheme); }
+        themeSelector.addEventListener('change', (event) => applyTheme(event.target.value));
+
+        // --- Scoring Logic ---
+        function getScoreForDiceSet(selectedDiceValues) {
+            if (!selectedDiceValues || selectedDiceValues.length === 0) return { score: 0, diceUsedCount: 0, isValidCombination: false };
+            let score = 0;
+            const counts = [0,0,0,0,0,0,0]; 
+            selectedDiceValues.forEach(val => counts[val]++);
+            
+            let diceEffectivelyUsed = 0; // How many dice from the input array form part of a valid score
+            let tempSelectedValues = [...selectedDiceValues]; 
+            
+            function countAndRemove(value, numToRemove) {
+                let actuallyRemoved = 0;
+                for (let i = 0; i < numToRemove; i++) {
+                    const index = tempSelectedValues.indexOf(value);
+                    if (index > -1) {
+                        tempSelectedValues.splice(index, 1);
+                        actuallyRemoved++;
+                    } else {
+                        break; // Not enough of this value in tempSelectedValues
+                    }
+                }
+                return actuallyRemoved;
+            }
+
+            // Check for complex combinations first (using original counts for detection)
+            if (selectedDiceValues.length === 6) {
+                if (counts[1]===1 && counts[2]===1 && counts[3]===1 && counts[4]===1 && counts[5]===1 && counts[6]===1) {
+                    score += 1500; diceEffectivelyUsed = 6; tempSelectedValues = [];
+                } else if (counts.filter(c => c === 2).length === 3) { // Three pairs
+                    score += 1500; diceEffectivelyUsed = 6; tempSelectedValues = [];
+                } else if (counts.filter(c => c === 3).length === 2) { // Two triplets
+                    score += 2500; diceEffectivelyUsed = 6; tempSelectedValues = [];
+                }
+            }
+
+            // Six of a kind (if not handled by two triplets for specific dice values)
+            if (diceEffectivelyUsed === 0) {
+                for (let val = 1; val <= 6; val++) { if (counts[val] === 6) { score += 3000; diceEffectivelyUsed += countAndRemove(val, 6); break; } }
+            }
+            // Five of a kind
+            if (diceEffectivelyUsed === 0 || tempSelectedValues.length >= 5) {
+                 for (let val = 1; val <= 6; val++) { if (counts[val] >= 5 && tempSelectedValues.filter(d => d === val).length >= 5) { score += 2000; diceEffectivelyUsed += countAndRemove(val, 5); break; } }
+            }
+            // Four of a kind
+            if (diceEffectivelyUsed === 0 || tempSelectedValues.length >= 4) {
+                for (let val = 1; val <= 6; val++) { if (counts[val] >= 4 && tempSelectedValues.filter(d => d === val).length >=4) { score += 1000; diceEffectivelyUsed += countAndRemove(val, 4); break; } }
+            }
+            // Three of a kind (can be multiple, e.g., three 2s and three 3s is NOT two triplets, but two separate three-of-a-kinds IF selected separately)
+            // This logic gets tricky if a subset is passed. Assume getScoreForDiceSet is for a *specific* selection the player/AI made.
+            for (let val = 1; val <= 6; val++) {
+                const currentValInSubset = tempSelectedValues.filter(d => d === val).length;
+                if (currentValInSubset >= 3) {
+                    if (val === 1) score += 1000; else score += val * 100;
+                    diceEffectivelyUsed += countAndRemove(val, 3);
+                }
+            }
+            // Single 1s
+            const onesLeftCount = tempSelectedValues.filter(d => d === 1).length;
+            if (onesLeftCount > 0) { score += onesLeftCount * 100; diceEffectivelyUsed += countAndRemove(1, onesLeftCount); }
+            // Single 5s
+            const fivesLeftCount = tempSelectedValues.filter(d => d === 5).length;
+            if (fivesLeftCount > 0) { score += fivesLeftCount * 50; diceEffectivelyUsed += countAndRemove(5, fivesLeftCount); }
+            
+            // A selection is valid if all dice passed to it are used in scoring
+            const isValidCombination = (score > 0 && diceEffectivelyUsed === selectedDiceValues.length);
+
+            return { score: isValidCombination ? score : 0, diceUsedCount: isValidCombination ? diceEffectivelyUsed : 0, isValidCombination: isValidCombination };
+        }
+
+        function canScoreFromRoll(rolledDiceValues) {
+            if (!rolledDiceValues || rolledDiceValues.length === 0) return false;
+            const counts = Array(7).fill(0); rolledDiceValues.forEach(v => counts[v]++);
+            if (counts[1] > 0 || counts[5] > 0) return true;
+            for (let i = 1; i <= 6; i++) { if (counts[i] >= 3) return true; }
+            if (rolledDiceValues.length === 6) {
+                if (counts[1]===1 && counts[2]===1 && counts[3]===1 && counts[4]===1 && counts[5]===1 && counts[6]===1) return true;
+                if (counts.filter(c => c === 2).length === 3) return true;
+                if (counts.filter(c => c === 3).length === 2) return true; // Two triplets
+            }
+            // Check for any scoring subset
+            const subsets = getAllSubsets(rolledDiceValues);
+            for (const subset of subsets) {
+                if (getScoreForDiceSet(subset).isValidCombination) return true;
+            }
+            return false;
+        }
+
+        // --- Game Actions ---
+        function initializeDiceElements() {
+            diceAreaEl.innerHTML = ''; dice = [];
+            for (let i = 0; i < NUM_DICE; i++) {
+                const dieEl = document.createElement('div'); dieEl.classList.add('die');
+                dieEl.dataset.id = i; dieEl.textContent = DICE_FACES[0];
+                dieEl.addEventListener('click', () => handleDieClick(i));
+                diceAreaEl.appendChild(dieEl);
+                dice.push({ id: i, value: 1, el: dieEl, isSelected: false, isScoredThisTurn: false });
+            }
+        }
+        function handleDieClick(index) {
+            if (dice[index].isScoredThisTurn || !turnHasRolled || (isAiGame && players[currentPlayerIndex].isAI)) return; playSound('click');
+            dice[index].isSelected = !dice[index].isSelected;
+            dice[index].el.classList.toggle('selected', dice[index].isSelected);
+            updateConfirmSelectionButtonState();
+        }
+        function updateConfirmSelectionButtonState() {
+            const anySelected = dice.some(d => d.isSelected && !d.isScoredThisTurn);
+            confirmSelectionButton.disabled = !anySelected || (isAiGame && players[currentPlayerIndex].isAI);
+        }
+        async function rollDiceAction() { // Renamed from rollDice to avoid conflict with AI's conceptual roll
+            if (numDiceAvailableToRoll === 0) return;
+            setPlayerControls(false); // Disable buttons during roll
+            setMessage(`${players[currentPlayerIndex].name} is rolling...`); playSound('roll');
+            
+            const diceToRollAndUpdate = dice.filter(d => !d.isScoredThisTurn);
+            const animationPromises = diceToRollAndUpdate.map(d => new Promise(resolve => {
+                d.el.classList.add('dice-rolling'); let animCount = 0;
+                const animInterval = setInterval(() => {
+                    d.el.textContent = DICE_FACES[Math.floor(Math.random() * 6)]; animCount++;
+                    if (animCount > 12 + Math.random()*6) { clearInterval(animInterval); d.el.classList.remove('dice-rolling'); resolve(); }
+                }, 70);
+            }));
+            await Promise.all(animationPromises);
+
+            let currentRolledValues = [];
+            dice.forEach(d => { if (!d.isScoredThisTurn) { d.value = Math.floor(Math.random() * 6) + 1; d.el.textContent = DICE_FACES[d.value - 1]; d.isSelected = false; d.el.classList.remove('selected'); currentRolledValues.push(d.value); }});
+            turnHasRolled = true;
+
+            if (!canScoreFromRoll(currentRolledValues)) {
+                setMessage(`BUST! ${players[currentPlayerIndex].name} loses ${currentRoundScore} round points.`); playSound('bust');
+                currentRoundScore = 0; 
+                setTimeout(() => switchTurn(true), isAiGame && players[currentPlayerIndex].isAI ? AI_THINK_DELAY / 2 : 100); // AI bust feels faster
+            } else {
+                setMessage(`${players[currentPlayerIndex].name}, select dice to score, then click 'Score Selected'.`);
+                if (!(isAiGame && players[currentPlayerIndex].isAI)) {
+                     setPlayerControls(true, false); // Enable confirm, disable roll/bank
+                }
+            }
+            updateScoresUI(); updateDiceVisuals();
+            return currentRolledValues; // Return for AI to process
+        }
+        function confirmSelectionAction() { // Renamed from confirmSelection
+            const selectedDiceObjects = dice.filter(d => d.isSelected && !d.isScoredThisTurn);
+            if (selectedDiceObjects.length === 0) { setMessage("Please select dice to score."); return false; }
+            
+            const selectedValues = selectedDiceObjects.map(d => d.value);
+            const scoreResult = getScoreForDiceSet(selectedValues);
+
+            if (scoreResult.isValidCombination && scoreResult.score > 0) {
+                playSound('score'); currentRoundScore += scoreResult.score;
+                selectedDiceObjects.forEach(d => { d.isScoredThisTurn = true; d.isSelected = false; d.el.classList.remove('selected');});
+                numDiceAvailableToRoll = dice.filter(d => !d.isScoredThisTurn).length;
+
+                if (numDiceAvailableToRoll === 0) { 
+                    setMessage(`Hot Dice! ${players[currentPlayerIndex].name} scored ${scoreResult.score}. Round total: ${currentRoundScore}. Roll all 6 again!`);
+                    numDiceAvailableToRoll = NUM_DICE; dice.forEach(d => d.isScoredThisTurn = false); 
+                    turnHasRolled = false; // Reset for the new roll with 6 dice
+                    if (!(isAiGame && players[currentPlayerIndex].isAI)) {
+                        setPlayerControls(true, true); // Enable roll, disable confirm/bank initially
+                    }
+                } else {
+                    setMessage(`${players[currentPlayerIndex].name} scored ${scoreResult.score}. Round total: ${currentRoundScore}. Roll remaining ${numDiceAvailableToRoll} dice or Bank.`);
+                     if (!(isAiGame && players[currentPlayerIndex].isAI)) {
+                        setPlayerControls(true, true); 
+                    }
+                }
+                const currentPlayer = players[currentPlayerIndex];
+                 if ((!currentPlayer.isInGame && currentRoundScore >= MIN_SCORE_TO_GET_IN) || (currentPlayer.isInGame && currentRoundScore > 0)) {
+                    if (!(isAiGame && players[currentPlayerIndex].isAI)) bankButton.disabled = false;
+                } else {
+                     if (!(isAiGame && players[currentPlayerIndex].isAI)) bankButton.disabled = true;
+                }
+                updateScoresUI(); updateDiceVisuals();
+                return true; // Successful scoring
+            } else {
+                setMessage("Invalid selection. All selected dice must form a scoring combination that uses all selected dice. Try again.");
+                selectedDiceObjects.forEach(d => { d.isSelected = false; d.el.classList.remove('selected'); });
+                if (!(isAiGame && players[currentPlayerIndex].isAI)) {
+                    confirmSelectionButton.disabled = true; 
+                }
+                updateDiceVisuals();
+                return false; // Failed scoring
+            }
+        }
+        function bankPointsAction() { // Renamed from bankPoints
+            const currentPlayer = players[currentPlayerIndex];
+            if (!currentPlayer.isInGame && currentRoundScore < MIN_SCORE_TO_GET_IN) { setMessage(`${currentPlayer.name} needs at least ${MIN_SCORE_TO_GET_IN} to get on board. Current: ${currentRoundScore}`); return; }
+            if (currentRoundScore === 0 && !(currentPlayer.score >= TARGET_SCORE)) { setMessage("No points in current round to bank."); return; } // Allow banking 0 if game already won by this player (edge case)
+            
+            playSound('bank'); currentPlayer.score += currentRoundScore; currentPlayer.isInGame = true; 
+            setMessage(`${currentPlayer.name} banked ${currentRoundScore} points! Total: ${currentPlayer.score}.`);
+            currentRoundScore = 0;
+
+            if (currentPlayer.score >= TARGET_SCORE) {
+                playSound('win'); setMessage(`Congratulations ${currentPlayer.name}! You reached ${currentPlayer.score} points and won!`);
+                updateHighScores(currentPlayer.name, currentPlayer.score); endGame();
+            } else { 
+                setTimeout(() => switchTurn(false), isAiGame && players[currentPlayerIndex].isAI ? AI_THINK_DELAY / 3 : 100);
+            }
+            updateScoresUI();
+        }
+        function switchTurn(isBustDueToNoScore) {
+            currentRoundScore = 0; 
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            numDiceAvailableToRoll = NUM_DICE; 
+            dice.forEach(d => { d.isScoredThisTurn = false; d.isSelected = false; d.el.classList.remove('selected', 'scored'); });
+            turnHasRolled = false;
+            
+            const nextPlayer = players[currentPlayerIndex];
+            setMessage(`${nextPlayer.name}'s turn. Roll dice!`);
+            updateScoresUI(); updateDiceVisuals(); 
+
+            if (gameActive) { // Only proceed if game is active
+                if (isAiGame && nextPlayer.isAI) {
+                    setPlayerControls(false); // Disable human controls
+                    setTimeout(aiTakeTurn, AI_THINK_DELAY / 2);
+                } else {
+                    setPlayerControls(true, true); // Enable human controls for human player
+                }
+            }
+        }
+        function endGame() {
+            gameActive = false;
+            setPlayerControls(false); // Disable all game action buttons
+            // Keep utility buttons active
+            muteButton.disabled = false;
+            scoringGuideButton.disabled = false;
+            howToPlayButton.disabled = false;
+            newGameSetupButton.disabled = false;
+        }
+        function setupNewGame() {
+            if (gameActive) {
+                if (!confirm("Are you sure you want to start a new game? Current game progress will be lost.")) {
+                    return;
+                }
+            }
+            gameActive = false;
+            gameSetupEl.classList.remove('hidden'); 
+            gameContainerEl.classList.add('hidden');
+            loadTheme(); 
+        }
+        function startGame() {
+            if (Tone.context.state !== 'running') { Tone.start().catch(e => console.warn("Audio context could not be started:", e)); }
+            applyTheme(themeSelector.value); 
+
+            const numSelectedPlayers = parseInt(numPlayersSelect.value);
+            isAiGame = (numSelectedPlayers === 1);
+            TARGET_SCORE = parseInt(targetScoreInput.value) || 10000; if (TARGET_SCORE < 1000) TARGET_SCORE = 1000;
+            
+            players = []; 
+            if (isAiGame) {
+                players.push({ id: 0, name: `Player 1`, score: 0, isInGame: false, isAI: false });
+                players.push({ id: 1, name: `AI Player`, score: 0, isInGame: false, isAI: true });
+            } else {
+                for (let i = 0; i < numSelectedPlayers; i++) { 
+                    players.push({ id: i, name: `Player ${i + 1}`, score: 0, isInGame: false, isAI: false }); 
+                }
+            }
+
+            currentPlayerIndex = 0; currentRoundScore = 0; numDiceAvailableToRoll = NUM_DICE; turnHasRolled = false; gameActive = true;
+            dice.forEach(d => { d.value = 1; d.isScoredThisTurn = false; d.isSelected = false; });
+            
+            setMessage(`${players[currentPlayerIndex].name}, roll the dice to start!`);
+            gameSetupEl.classList.add('hidden'); gameContainerEl.classList.remove('hidden');
+            
+            updateScoresUI(); updateDiceVisuals(); loadHighScores();
+            
+            if (isAiGame && players[currentPlayerIndex].isAI) {
+                setPlayerControls(false);
+                setTimeout(aiTakeTurn, AI_THINK_DELAY);
+            } else {
+                setPlayerControls(true, true); // Enable roll, disable others initially
+            }
+        }
+
+        // --- UI Updates ---
+        function setPlayerControls(enable, initialTurnState = false) {
+            if (!gameActive && !enable) { // If game ended, ensure buttons stay disabled except utilities
+                rollButton.disabled = true;
+                bankButton.disabled = true;
+                confirmSelectionButton.disabled = true;
+                return;
+            }
+             if (isAiGame && players[currentPlayerIndex]?.isAI && enable) { // AI is playing, human controls should be off
+                rollButton.disabled = true;
+                bankButton.disabled = true;
+                confirmSelectionButton.disabled = true;
+                return;
+            }
+
+            rollButton.disabled = !enable || (enable && !initialTurnState && turnHasRolled); // Can roll if enabled AND (it's start of turn OR after hot dice)
+            bankButton.disabled = !enable || (enable && initialTurnState) || currentRoundScore === 0; // Can bank if enabled AND NOT start of turn AND has score
+            confirmSelectionButton.disabled = !enable || (enable && initialTurnState) || !dice.some(d => d.isSelected && !d.isScoredThisTurn);
+            
+            // Refined logic for bank button based on game rules
+            if (enable && currentRoundScore > 0) {
+                 const currentPlayer = players[currentPlayerIndex];
+                 if ((!currentPlayer.isInGame && currentRoundScore >= MIN_SCORE_TO_GET_IN) || currentPlayer.isInGame) {
+                    bankButton.disabled = false;
+                 } else {
+                    bankButton.disabled = true;
+                 }
+            } else if (enable) { // If no score, bank is disabled unless game over
+                 bankButton.disabled = true;
+            }
+
+            if(turnHasRolled && enable && !initialTurnState){ // After a roll, can't roll again until selection or bust
+                rollButton.disabled = true;
+                updateConfirmSelectionButtonState(); // confirm button depends on selection
+            }
+            if(initialTurnState && enable) { // Start of a player's turn segment
+                rollButton.disabled = false;
+                bankButton.disabled = true;
+                confirmSelectionButton.disabled = true;
+            }
+        }
+
+        function updateScoresUI() {
+            if (players.length === 0) return; 
+            const currentPlayer = players[currentPlayerIndex];
+            currentPlayerTurnEl.textContent = currentPlayer.name; roundScoreEl.textContent = currentRoundScore;
+            scoresOverviewEl.innerHTML = '';
+            players.forEach(p => { const pScoreEl = document.createElement('p'); pScoreEl.textContent = `${p.name}: ${p.score} ${p.id === currentPlayer.id ? ' (Playing)' : ''}`; if (p.id === currentPlayer.id) pScoreEl.classList.add('current-player-indicator'); scoresOverviewEl.appendChild(pScoreEl); });
+        }
+        function updateDiceVisuals() {
+            dice.forEach(d => { 
+                d.el.textContent = DICE_FACES[d.value - 1]; 
+                d.el.classList.toggle('selected', d.isSelected && !d.isScoredThisTurn); 
+                d.el.classList.toggle('scored', d.isScoredThisTurn); 
+                d.el.classList.remove('dice-rolling'); // Ensure rolling animation is removed
+                if (!turnHasRolled && !d.isScoredThisTurn) { d.el.classList.remove('selected', 'scored'); }
+            });
+        }
+        function setMessage(msg) { messageAreaEl.textContent = msg; }
+
+        // --- High Score Logic ---
+        function loadHighScores() { const storedScores = localStorage.getItem('tenThousandHighScores'); if (storedScores) highScores = JSON.parse(storedScores); else highScores = []; displayHighScores(); }
+        function saveHighScores() { localStorage.setItem('tenThousandHighScores', JSON.stringify(highScores)); }
+        function updateHighScores(playerName, playerScore) { highScores.push({ name: playerName, score: playerScore, date: new Date().toLocaleDateString() }); highScores.sort((a, b) => b.score - a.score); highScores = highScores.slice(0, 5); saveHighScores(); displayHighScores(); }
+        function displayHighScores() {
+            highScoresListEl.innerHTML = ''; if (highScores.length === 0) { highScoresListEl.innerHTML = '<li>No high scores yet!</li>'; return; }
+            highScores.forEach(hs => { const li = document.createElement('li'); li.textContent = `${hs.name}: ${hs.score} (on ${hs.date})`; highScoresListEl.appendChild(li); });
+        }
+
+        // --- AI Logic ---
+        async function aiTakeTurn() {
+            if (!gameActive || !players[currentPlayerIndex]?.isAI) return;
+            const aiPlayer = players[currentPlayerIndex];
+            setMessage(`${aiPlayer.name} is thinking...`);
+            setPlayerControls(false); // Ensure human can't interfere
+
+            // 1. AI Rolls Dice
+            if (!turnHasRolled || numDiceAvailableToRoll === NUM_DICE) { // Roll if start of turn segment or hot dice
+                await sleep(AI_THINK_DELAY / 2);
+                await rollDiceAction(); // This function now handles bust internally and calls switchTurn
+                if (!gameActive || !canScoreFromRoll(dice.filter(d => !d.isScoredThisTurn).map(d => d.value))) { // If busted or game ended by roll
+                    // rollDiceAction would have called switchTurn or endGame
+                    if(!gameActive) return; // Game ended during roll (e.g. final player busted after winner declared)
+                    if (players[currentPlayerIndex]?.isAI && gameActive) { // If bust switched to another AI (unlikely but safeguard)
+                       // setTimeout(aiTakeTurn, AI_THINK_DELAY); // No, switchTurn handles the next player
+                    } else if (gameActive) {
+                        // setPlayerControls(true, true); // Switched to human
+                    }
+                    return; // Bust or no scorable dice, rollDiceAction handled it.
+                }
+            }
+            
+            // If game ended after roll (e.g. player won and this AI was last)
+            if (!gameActive) return;
+
+
+            // 2. AI Selects Dice
+            await sleep(AI_THINK_DELAY);
+            const availableDiceForSelection = dice.filter(d => !d.isScoredThisTurn);
+            const bestSelection = aiFindBestDiceToSelect(availableDiceForSelection.map(d => d.value));
+
+            if (bestSelection && bestSelection.score > 0) {
+                setMessage(`${aiPlayer.name} selects dice for ${bestSelection.score} points.`);
+                // Deselect any previously auto-selected (shouldn't happen with AI)
+                dice.forEach(d => d.isSelected = false);
+                // Select the dice corresponding to bestSelection.diceValues
+                let tempAvailableDice = [...availableDiceForSelection];
+                for (const val of bestSelection.diceValues) {
+                    const dieToSelect = tempAvailableDice.find(d => d.value === val);
+                    if (dieToSelect) {
+                        dieToSelect.isSelected = true;
+                        tempAvailableDice.splice(tempAvailableDice.indexOf(dieToSelect), 1);
+                    }
+                }
+                updateDiceVisuals();
+                await sleep(AI_THINK_DELAY / 2);
+                
+                const scoredSuccessfully = confirmSelectionAction(); // This updates round score, numDiceAvailable etc.
+                
+                if (!gameActive) return; // Game might end after scoring (win condition)
+
+                if (scoredSuccessfully) {
+                    // 3. AI Decides to Roll Again or Bank
+                    await sleep(AI_THINK_DELAY);
+                    aiDecideRollOrBank();
+                } else {
+                    // This should ideally not happen if aiFindBestDiceToSelect is robust and canScoreFromRoll was true
+                    setMessage(`${aiPlayer.name} made an invalid selection (this shouldn't happen). Banking current points.`);
+                    if(currentRoundScore > 0) bankPointsAction(); else switchTurn(true);
+                }
+            } else {
+                 // No scorable dice found by AI - this implies a bust that might have been missed or complex situation
+                setMessage(`${aiPlayer.name} couldn't find scorable dice. Bust or passing.`);
+                if (currentRoundScore > 0 && ((aiPlayer.isInGame && currentRoundScore > 0) || (!aiPlayer.isInGame && currentRoundScore >= MIN_SCORE_TO_GET_IN))) {
+                    bankPointsAction();
+                } else {
+                     // Effectively a bust if no points accumulated and can't score
+                    currentRoundScore = 0; // Ensure round score is 0 on bust pass
+                    switchTurn(true); // Pass turn, was a bust.
+                }
+            }
+        }
+
+        function aiFindBestDiceToSelect(currentDiceValues) {
+            const availableDiceObjects = dice.filter(d => !d.isScoredThisTurn);
+            let bestScore = 0;
+            let bestDiceToSelectValues = []; // values of the dice
+            let bestDiceUsedCount = 0;
+
+            const subsets = getAllSubsets(availableDiceObjects); // Get subsets of actual dice objects
+
+            for (const subsetOfDiceObjects of subsets) {
+                if (subsetOfDiceObjects.length === 0) continue;
+                const subsetValues = subsetOfDiceObjects.map(d => d.value);
+                const result = getScoreForDiceSet(subsetValues);
+
+                if (result.isValidCombination && result.score > 0) {
+                    if (result.score > bestScore) {
+                        bestScore = result.score;
+                        bestDiceToSelectValues = subsetValues;
+                        bestDiceUsedCount = result.diceUsedCount;
+                    } else if (result.score === bestScore) {
+                        if (result.diceUsedCount > bestDiceUsedCount) { // Prefer using more dice for same score
+                            bestDiceToSelectValues = subsetValues;
+                            bestDiceUsedCount = result.diceUsedCount;
+                        }
+                    }
+                }
+            }
+            return { score: bestScore, diceValues: bestDiceToSelectValues };
+        }
+        
+        function getAllSubsets(diceObjectsArray) { // Expects array of dice objects
+            return diceObjectsArray.reduce(
+                (subsets, dieObject) => subsets.concat(
+                    subsets.map(set => [dieObject, ...set])
+                ),
+                [[]] // Start with an empty set to build upon
+            ); // We want to include empty set to filter later if needed, or handle it in the loop
+        }
+
+
+        function aiDecideRollOrBank() {
+            const aiPlayer = players[currentPlayerIndex];
+            if (!gameActive) return;
+
+            // Rule 1: Hot Dice - must roll if numDiceAvailableToRoll is NUM_DICE (meaning all were scored)
+            // confirmSelectionAction handles Hot Dice by setting turnHasRolled = false and numDiceAvailable = NUM_DICE
+            if (numDiceAvailableToRoll === NUM_DICE && turnHasRolled === false) { 
+                setMessage(`${aiPlayer.name} got Hot Dice! Rolling all ${NUM_DICE} dice again.`);
+                setTimeout(aiTakeTurn, AI_THINK_DELAY / 2); // AI "takes turn" again, which will start with a roll
+                return;
+            }
+            
+            // Rule 2: Not on board yet
+            if (!aiPlayer.isInGame && currentRoundScore < MIN_SCORE_TO_GET_IN) {
+                if (numDiceAvailableToRoll > 0) {
+                    setMessage(`${aiPlayer.name} needs ${MIN_SCORE_TO_GET_IN} to get on board (has ${currentRoundScore}). Rolling again.`);
+                    turnHasRolled = false; // Reset for the next roll segment
+                    setTimeout(aiTakeTurn, AI_THINK_DELAY / 2);
+                } else { // No dice left, and not on board - forced to bank or bust if 0 points
+                    setMessage(`${aiPlayer.name} has no dice left and isn't on board with ${currentRoundScore}.`);
+                    bankPointsAction(); // Will fail if score < MIN_SCORE_TO_GET_IN, effectively busting turn.
+                }
+                return;
+            }
+
+            // Rule 3: Winning move
+            if (aiPlayer.score + currentRoundScore >= TARGET_SCORE) {
+                setMessage(`${aiPlayer.name} has enough to win! Banking ${currentRoundScore} points.`);
+                bankPointsAction();
+                return;
+            }
+
+            // Rule 4: Risk/Reward decision
+            // Bank if round score is high, or few dice left with decent points
+            const diceRemainingRatio = numDiceAvailableToRoll / NUM_DICE;
+            if (currentRoundScore >= AI_BANK_THRESHOLD * 1.5) { // Quite a good round
+                 setMessage(`${aiPlayer.name} has a good round score (${currentRoundScore}). Banking points.`);
+                 bankPointsAction();
+            } else if (numDiceAvailableToRoll <= 2 && currentRoundScore >= AI_BANK_THRESHOLD / 2) { // Risky with few dice
+                 setMessage(`${aiPlayer.name} has few dice left (${numDiceAvailableToRoll}) with ${currentRoundScore} pts. Banking.`);
+                 bankPointsAction();
+            } else if (currentRoundScore >= AI_BANK_THRESHOLD && diceRemainingRatio <= 0.5) { // Standard bank threshold met with half or fewer dice
+                setMessage(`${aiPlayer.name} decides to bank ${currentRoundScore} points.`);
+                bankPointsAction();
+            }
+            else if (numDiceAvailableToRoll > 0) { // Otherwise, if dice available, roll
+                setMessage(`${aiPlayer.name} decides to roll again with ${numDiceAvailableToRoll} dice.`);
+                turnHasRolled = false; // Reset for the next roll segment
+                setTimeout(aiTakeTurn, AI_THINK_DELAY / 2);
+            } else { // No dice left, forced to bank
+                setMessage(`${aiPlayer.name} has no dice left. Banking ${currentRoundScore} points.`);
+                bankPointsAction();
+            }
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+
+        // --- Event Listeners ---
+        startGameButton.addEventListener('click', startGame);
+        rollButton.addEventListener('click', async () => {
+            await rollDiceAction();
+            // After human roll, if it's AI game and next player is AI, trigger AI.
+            // This path is mainly for human player. AI calls rollDiceAction directly.
+             if (gameActive && isAiGame && players[currentPlayerIndex]?.isAI) {
+                 setPlayerControls(false);
+                 setTimeout(aiTakeTurn, AI_THINK_DELAY);
+             } else if (gameActive) {
+                // setPlayerControls handles button states after roll
+             }
+        });
+        bankButton.addEventListener('click', bankPointsAction);
+        confirmSelectionButton.addEventListener('click', () => {
+            const success = confirmSelectionAction();
+            if (success && gameActive) { // if scoring was successful and game continues
+                if (isAiGame && players[currentPlayerIndex]?.isAI) { // Should not happen, AI calls it directly
+                    // AI would call aiDecideRollOrBank
+                } else {
+                    // For human player, buttons are updated by confirmSelectionAction and setPlayerControls
+                    // Player needs to choose to roll again or bank.
+                    // Hot dice scenario automatically enables roll button. Otherwise, both roll and bank might be available.
+                    if (numDiceAvailableToRoll === NUM_DICE && turnHasRolled === false) { // Hot Dice
+                        setPlayerControls(true, true); // Roll enabled, bank disabled
+                    } else {
+                         setPlayerControls(true, false); // Roll disabled (must bank or have selected more) -> no, roll enabled, confirm disabled.
+                         // After confirm, player can roll or bank.
+                         rollButton.disabled = false;
+                         bankButton.disabled = !(currentRoundScore === 0 || (!players[currentPlayerIndex].isInGame && currentRoundScore < MIN_SCORE_TO_GET_IN));
+                         confirmSelectionButton.disabled = true;
+                    }
+                }
+            }
+        });
+        newGameSetupButton.addEventListener('click', setupNewGame);
+        
+        howToPlayButton.addEventListener('click', () => { playSound('click'); howToPlayModalEl.classList.remove('hidden'); });
+        closeHowToPlayModalButton.addEventListener('click', () => { playSound('click'); howToPlayModalEl.classList.add('hidden'); });
+        howToPlayModalEl.addEventListener('click', (event) => { if (event.target === howToPlayModalEl) howToPlayModalEl.classList.add('hidden'); });
+
+        scoringGuideButton.addEventListener('click', () => { playSound('click'); scoringModalEl.classList.remove('hidden'); });
+        closeScoringModalButton.addEventListener('click', () => { playSound('click'); scoringModalEl.classList.add('hidden'); });
+        scoringModalEl.addEventListener('click', (event) => { if (event.target === scoringModalEl) scoringModalEl.classList.add('hidden'); });
+        
+        muteButton.addEventListener('click', () => { soundsMuted = !soundsMuted; muteButton.textContent = soundsMuted ? "Unmute Sounds" : "Mute Sounds"; playSound('click'); });
+
+        // --- Initial Setup ---
+        initializeDiceElements(); 
+        loadTheme(); 
+        loadHighScores();
+        // Game starts from setup screen by default
+    </script>
+</body>
+</html>
